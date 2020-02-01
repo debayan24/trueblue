@@ -1,0 +1,103 @@
+import pandas as pd, numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+df = pd.read_csv("weather_features.csv")
+
+df.dtypes
+
+df.isnull().sum()
+
+df.dt_iso = pd.to_datetime(df.dt_iso)
+df['date'] = [d.date() for d in df['dt_iso']]
+df['time'] = [d.time() for d in df['dt_iso']]
+df['year'] = pd.DatetimeIndex(df['date']).year
+df['month'] = pd.DatetimeIndex(df['date']).month
+df['day'] = pd.DatetimeIndex(df['date']).day
+
+df_1 = df.groupby(['city_name', 'year', 'month', 'day']).mean()
+df_1.head()
+
+mean_city = df.groupby('city_name').mean()
+mean_city
+
+max_city = df.groupby('city_name').max()
+max_city
+
+min_city = df.groupby('city_name').min()
+min_city
+
+sns.boxplot(x = df['pressure'])
+df.loc[df.pressure > 1051, 'pressure'] = np.nan
+df.loc[df.pressure < 950, 'pressure'] = np.nan
+
+sns.boxplot(x=df['wind_speed'])
+
+sns.boxplot(x=df['temp'])
+df.loc[df.temp > 300, 'temp'] = np.nan
+df.loc[df.temp < 273, 'temp'] = np.nan
+
+df['weather_main'].value_counts()
+
+df['weather_description'].value_counts()
+
+def scatter(x,fig):
+    plt.subplot(5,2,fig)
+    plt.scatter(df[x], df['temp'])
+    plt.ylabel('temp')
+    plt.xlabel(x)
+
+plt.figure(figsize=(10,20))
+
+scatter('humidity', 1)
+scatter('wind_speed', 2)
+scatter('clouds_all', 3)
+
+plt.tight_layout()
+
+
+
+mean_city = df.groupby('city_name').mean()
+mean_city
+
+print(df_1[df_1.temp == df_1.temp.max()])
+
+from numpy import mean
+g = sns.barplot(x="city_name", y="temp", data = df, estimator=mean)
+
+ax = sns.lineplot(x="month", y="temp", hue="city_name", data=df)
+
+print(df_1[df_1.wind_speed == df_1.wind_speed.max()])
+
+g = sns.barplot(x="city_name", y="wind_speed", data = df, estimator=mean)
+ax = sns.lineplot(x="month", y="wind_speed", hue="city_name",
+                  data=df)
+                  
+df['weather_main'].value_counts().plot(kind='bar')
+
+print(df[df.humidity == df.humidity.max()])
+
+num_cols = ['temp', 'pressure', 'humidity', 'wind_speed', 'clouds_all'] 
+
+corrs = df[num_cols].corr()
+corrs
+
+plt.figure(figsize=(15,12))
+sns.heatmap(df.corr(),annot=True,cmap='RdBu_r')
+plt.title("Correlation Of Features")
+plt.show()
+
+sns.jointplot(x = df["wind_speed"],y = df["temp"],kind='reg')
+
+sns.jointplot(x = df["humidity"],y = df["temp"],kind='reg')
+
+from statsmodels.formula.api import ols
+
+model = ols('temp ~ humidity + wind_speed + clouds_all + C(month)', data=df)
+fitted_model = model.fit()
+fitted_model.summary()
+
+
+
+
